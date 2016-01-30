@@ -3,10 +3,10 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from flask import Flask
-from flask import jsonify
+from flask_restplus import Api
 
-from models.base import Base
-from models.user import User
+from resources.base import Base
+import resources.user as user
 
 # Connect to database and create a new session
 
@@ -22,10 +22,8 @@ session = Session()
 # Create new instance of flask application
 
 app = Flask(__name__)
+api = Api(app, version='1.0', title='Tiny Cms API', description='CRUD content')
 
-# Route definitions
+# Initialize resources
 
-@app.route('/api/users')
-def hello():
-    users = session.query(User)
-    return jsonify(results=[user.serialize for user in users.all()])
+user.initialize(api, session)
