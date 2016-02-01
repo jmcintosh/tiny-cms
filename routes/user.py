@@ -15,6 +15,16 @@ def bad_request(message):
     e.data = { 'error': message }
     return e
 
+# Helper, generates a token for a user
+def generate_token(user):
+ 
+    #Generate a new JWT containing user info which can be used to authenticate future api calls
+    return jwt.encode(
+      { 'username': user.username, 'email': user.email, 'id': user.id },
+      config.get('token', 'secret'),
+      algorithm='HS256'
+    )
+
 '''
 Flask Restplus definitions
 api - flask_restplus api instance
@@ -78,8 +88,8 @@ def initialize(api, session):
                     session.rollback()
                     raise bad_request('Username or email already exists')
 
-            #Return relevant data for new user
-            return user.serialize
+            # Return a new token
+            return generate_token(user)
 
     #User operations
     @ns.route('/login')
@@ -104,10 +114,6 @@ def initialize(api, session):
             #Check password
             if bcrypt.hashpw(args.password.encode('utf-8'), user.password.encode('utf-8')) != user.password:
                 raise bad_request('Incorrect username or password')
-            
-            #Generate a new JWT containing username which can be used to authenticate future api calls
-            return jwt.encode(
-              { 'username': user.username, 'email': user.email, 'id': user.id },
-              config.get('token', 'secret'),
-              algorithm='HS256'
-            )
+
+            # Return a new token
+            return generate_token(user)

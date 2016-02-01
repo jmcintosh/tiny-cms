@@ -7,6 +7,7 @@ from flask_restplus import Api
 from config import config
 from models.base import Base
 import routes.user as user
+import routes.message as message
 
 # Connect to database and create a new session
 engine = create_engine(config.get('database', 'connection_string'), echo=True)
@@ -23,3 +24,4 @@ api = Api(app, version='1.0', title='Tiny Cms API', description='CRUD content')
 
 # Initialize resources
 user.initialize(api, session)
+message.initialize(api, session)

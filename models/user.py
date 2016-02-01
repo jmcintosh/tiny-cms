@@ -7,10 +7,10 @@ class User(Base):
     __tablename__ = 'users'
     
     id = Column(Integer, primary_key=True)
-    username = Column(String, unique=True, nullable=False)
-    email = Column(String, unique=True, nullable=False)
+    username = Column(String(length=50), unique=True, nullable=False)
+    email = Column(String(length=50), unique=True, nullable=False)
     email_verified = Column(Boolean, default=False)
-    password = Column(String, nullable=False)
+    password = Column(String(length=500), nullable=False)
     
     @property
     def serialize(self):
