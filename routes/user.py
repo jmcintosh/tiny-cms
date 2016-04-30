@@ -8,6 +8,7 @@ from werkzeug.exceptions import BadRequest
 
 from tiny_cms.config import config
 from models.user import User
+from decorators import requires_token
 
 # Helper, creates new bad request error
 def bad_request(message):
@@ -44,7 +45,7 @@ def initialize(api, session):
 
     #List operations
     @ns.route('/')
-    class UserList(Resource):
+    class UserResourceList(Resource):
 
         #List users and create new ones
         @api.doc('list_users')
@@ -91,12 +92,13 @@ def initialize(api, session):
             # Return a new token
             return generate_token(user)
 
-    #User operations
+    # User login
     @ns.route('/login')
-    class UserLogin(Resource):
+    class UserResourceLogin(Resource):
 
         #Checks credentials and issues a token
         @api.doc('login_user')
+        @api.doc(params={'username': 'Username', 'password': 'Password'})
         def post(self):
 
             '''Check credentials and issue token'''
@@ -105,7 +107,7 @@ def initialize(api, session):
             parser.add_argument('password', type=str, location='json', required=True, help='Must supply password.')
             args = parser.parse_args()
 
-            #Find an existing user
+            # Find an existing user
             user = session.query(User).filter_by(username = args.username).first()
 
             if user is None:
@@ -117,3 +119,37 @@ def initialize(api, session):
 
             # Return a new token
             return generate_token(user)
+
+    # User get, update delete users
+    @ns.route('/<user_id>')
+    @api.response(404, 'User not found')
+    @api.doc(params={'user_id': 'The user id' })
+    class UserResource(Resource):
+    
+        # Gets a single user by id
+        def get(self, user_id):
+            
+            # Find user
+            user = session.query(User).filter_by(id = user_id).first()
+            
+            if user is None:
+                api.abort(404, "user {} doesn't exist".format(user_id))
+            
+            return user.serialize
+
+        @api.response(204, 'User deleted')
+        @requires_token
+        def delete(self, user_id, token):
+        
+            # Verify same user
+            if (token['id'] != user_id):
+                api.abort(403, 'You cannot delete this user')
+            
+            # Delete user
+            try:
+                session.delete(user)
+                session.commit()
+            except IntegrityError, exc:
+                if 'duplicate' in exc.message:
+                    session.rollback()
+                    raise bad_request('Username or email already exists')

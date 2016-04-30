@@ -57,7 +57,6 @@ def initialize(api, session):
                 session.add(message)
                 session.commit()
             except IntegrityError, exc:
-                print exc.message
                 session.rollback()
                 raise bad_request('Cannot create message')
 

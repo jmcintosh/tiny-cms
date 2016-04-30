@@ -4,6 +4,7 @@ import re
 from functools import wraps
 from flask_restplus import reqparse
 from werkzeug.exceptions import BadRequest
+from flask import make_response
 
 from tiny_cms.config import config
 
@@ -39,3 +40,14 @@ def requires_token(f):
         
         return f(*args, **kwargs)
     return decorated
+
+# CORS decorator
+
+def cors(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        resp = make_response(f(*args, **kwargs))
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp
+    return decorated
+        
